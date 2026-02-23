@@ -4,6 +4,8 @@ import argparse
 import sys
 from concurrent.futures import ThreadPoolExecutor
 import os
+import pwd
+import traceback
 import yaml
 from collections import defaultdict
 from colorama import Fore, Style, init
@@ -21,6 +23,24 @@ def load_config(config_file):
     with open(config_file, 'r') as f:
         return yaml.safe_load(f)
 
+def expand_path(path):
+    """Expand ~ to the correct user's home directory, even when running with sudo"""
+    # If running with sudo, use the original user's home directory
+    if 'SUDO_USER' in os.environ:
+        sudo_user = os.environ['SUDO_USER']
+        # Get the original user's home directory
+        try:
+            user_home = pwd.getpwnam(sudo_user).pw_dir
+            # Replace ~ with the actual home directory
+            if path.startswith('~/'):
+                return os.path.join(user_home, path[2:])
+            elif path == '~':
+                return user_home
+        except KeyError:
+            pass
+    # Fall back to normal expansion
+    return os.path.expanduser(path)
+
 def run_tool(tool_config, variables):
     """Run a tool based on its configuration"""
     name = tool_config['name']
@@ -31,7 +51,7 @@ def run_tool(tool_config, variables):
     
     # If tool has a wordlist field, use it (with expansion)
     if 'wordlist' in tool_config:
-        tool_vars['wordlist'] = os.path.expanduser(tool_config['wordlist'])
+        tool_vars['wordlist'] = expand_path(tool_config['wordlist'])
     
     # Build command with variable substitution
     cmd = [tool_name]
@@ -73,7 +93,6 @@ def run_tool(tool_config, variables):
     except Exception as e:
         print(f"{Fore.RED}[!] {name} failed: {e}")
         if DEBUG:
-            import traceback
             print(f"{Fore.YELLOW}    {traceback.format_exc()}")
         return {'name': name, 'returncode': -1, 'error': str(e)}
 

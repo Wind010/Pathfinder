@@ -28,7 +28,7 @@ tools:
       - "http://{hostname}/FUZZ"
       - "-w"
       - "{wordlist}"
-    output_file: "{output_dir}/ffuf/dirs_{hostname}.json"
+    output_file: "{output_dir}/ffuf/dirs_{hostname}.txt"
     output_args:
       - "-o"
     
@@ -43,6 +43,6 @@ tools:
       - "Host: FUZZ.{hostname}"
       - "-w"
       - "{wordlist}"
-    output_file: "{output_dir}/ffuf/subdomains_{hostname}.json"
+    output_file: "{output_dir}/ffuf/subdomains_{hostname}.txt"
     output_args:
       - "-o"
