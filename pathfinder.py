@@ -79,8 +79,8 @@ def run_tool(tool_config, variables):
 
 def main():
     parser = argparse.ArgumentParser(description="Automated host scanning with configurable tools")
-    parser.add_argument("ip", required=True, help="IP address of target")
-    parser.add_argument("hostname", required=True, help="Hostname for /etc/hosts")
+    parser.add_argument("--ip", required=True, help="IP address of target")
+    parser.add_argument("--hostname", required=True, help="Hostname for /etc/hosts")
     parser.add_argument("-c", "--config", default="./config.yaml",
                        help="Path to configuration file")
     parser.add_argument("-o", "--output-dir", required=True,
