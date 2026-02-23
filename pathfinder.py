@@ -41,9 +41,8 @@ def expand_path(path):
     # Fall back to normal expansion
     return os.path.expanduser(path)
 
-def run_tool(tool_config, variables):
-    """Run a tool based on its configuration"""
-    name = tool_config['name']
+def build_command(tool_config, variables):
+    """Build command from tool configuration"""
     tool_name = tool_config['tool_name']
     
     # Merge global variables with tool-specific variables
@@ -59,12 +58,62 @@ def run_tool(tool_config, variables):
         cmd.append(arg.format(**tool_vars))
     
     # Add output file if specified
-    output_file = None
     if 'output_file' in tool_config:
         output_file = tool_config['output_file'].format(**tool_vars)
         if 'output_args' in tool_config:
             cmd.extend(tool_config['output_args'])
             cmd.append(output_file)
+        # Ensure output directory exists
+        output_dir = os.path.dirname(output_file)
+        if output_dir:
+            os.makedirs(output_dir, exist_ok=True)
+    
+    return cmd
+
+def generate_script(tool_config, variables, output_dir):
+    """Generate a shell script for a tool"""
+    name = tool_config['name']
+    cmd = build_command(tool_config, variables)
+    
+    # Create scripts directory
+    scripts_dir = os.path.join(output_dir, 'scripts')
+    os.makedirs(scripts_dir, exist_ok=True)
+    
+    # Create script file
+    script_file = os.path.join(scripts_dir, f"{name}.sh")
+    with open(script_file, 'w') as f:
+        f.write("#!/bin/bash\n")
+        f.write(f"# Generated script for: {name}\n")
+        f.write(f"# Generated on: {subprocess.run(['date'], capture_output=True, text=True).stdout.strip()}\n\n")
+        
+        # Write the command
+        # Use proper shell escaping for arguments with spaces
+        escaped_cmd = []
+        for arg in cmd:
+            if ' ' in arg or '"' in arg or "'" in arg:
+                # Escape single quotes and wrap in single quotes
+                escaped_cmd.append(f"'{arg.replace("'", "'\\''")}")
+            else:
+                escaped_cmd.append(arg)
+        
+        f.write(' '.join(escaped_cmd) + '\n')
+    
+    # Make script executable
+    os.chmod(script_file, 0o755)
+    
+    return script_file
+
+def run_tool(tool_config, variables):
+    """Run a tool based on its configuration"""
+    name = tool_config['name']
+    
+    # Build command
+    cmd = build_command(tool_config, variables)
+    
+    # Get output file if specified
+    output_file = None
+    if 'output_file' in tool_config:
+        output_file = tool_config['output_file'].format(**variables)
     
     print(f"{Fore.CYAN}\n[*] Running {name}...")
     print(f"{Fore.CYAN}    Command: {' '.join(cmd)}")
@@ -108,6 +157,8 @@ def main():
                        help="Skip updating /etc/hosts file")
     parser.add_argument("-d", "--debug", action="store_true",
                        help="Enable debug logging with detailed error information")
+    parser.add_argument("-g", "--generate-scripts", action="store_true",
+                       help="Generate shell scripts for each tool in the output directory")
     
     args = parser.parse_args()
     
@@ -141,11 +192,22 @@ def main():
         'hostname': args.hostname,
         'output_dir': args.output_dir
     }
+    
     # Group tools by order
     tools_by_order = defaultdict(list)
     for tool in config.get('tools', []):
         order = tool.get('order', 999)
         tools_by_order[order].append(tool)
+    
+    # Generate scripts if requested
+    if args.generate_scripts:
+        print(f"{Fore.CYAN}\n[*] Generating shell scripts...")
+        scripts_generated = []
+        for tool in config.get('tools', []):
+            script_file = generate_script(tool, variables, args.output_dir)
+            scripts_generated.append(script_file)
+            print(f"{Fore.GREEN}    Generated: {os.path.basename(script_file)}")
+        print(f"{Fore.GREEN}[+] Scripts saved to: {os.path.join(args.output_dir, 'scripts')}/")
     
     # Execute tools in order
     all_results = []
@@ -171,9 +233,9 @@ def main():
     print(f"\n[*] Summary:")
     for result in all_results:
         if result.get('returncode') == 0:
-            print(f"{Fore.GREEN}    ✓ {result['name']}")
+            print(f"{Fore.GREEN}    [+] {result['name']}")
         else:
-            print(f"{Fore.RED}    ✗ {result['name']}")
+            print(f"{Fore.RED}    [-] {result['name']}")
             if DEBUG:
                 print(f"{Fore.YELLOW}      Return code: {result.get('returncode')}")
                 if 'error' in result:
