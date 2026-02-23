@@ -1,0 +1,48 @@
+# Pathfinder Tool Configuration
+# order: determines execution order. Tools with the same order run in parallel.
+# Variables available: {ip}, {hostname}, {output_dir}, {wordlist}, {subdomain_wordlist}
+
+tools:
+  - name: rustscan
+    order: 1
+    tool_name: rustscan
+    arguments:
+      - "-a"
+      - "{hostname}"
+      - "--ulimit"
+      - "5000"
+      - "--range"
+      - "1-65535"
+      - "--"
+      - "A"
+    output_file: "{output_dir}/rustscan/{hostname}.txt"
+    output_args:
+      - "-oA"
+    
+  - name: FFUF_directories
+    order: 1
+    tool_name: ffuf
+    wordlist: "~/git/SecLists/Discovery/Web-Content/common.txt"
+    arguments:
+      - "-u"
+      - "http://{hostname}/FUZZ"
+      - "-w"
+      - "{wordlist}"
+    output_file: "{output_dir}/ffuf/dirs_{hostname}.json"
+    output_args:
+      - "-o"
+    
+  - name: FFUF_subdomains
+    order: 1
+    tool_name: ffuf
+    wordlist: "~/git/SecLists/Discovery/DNS/subdomains-top1million-110000.txt"
+    arguments:
+      - "-u"
+      - "http://{hostname}"
+      - "-H"
+      - "Host: FUZZ.{hostname}"
+      - "-w"
+      - "{wordlist}"
+    output_file: "{output_dir}/ffuf/subdomains_{hostname}.json"
+    output_args:
+      - "-o"
