@@ -13,6 +13,9 @@ from hosts_manager import update_hosts
 # Initialize colorama
 init(autoreset=True)
 
+# Global debug flag
+DEBUG = False
+
 def load_config(config_file):
     """Load configuration from YAML file"""
     with open(config_file, 'r') as f:
@@ -48,29 +51,50 @@ def run_tool(tool_config, variables):
     
     try:
         result = subprocess.run(cmd, capture_output=True, text=True, timeout=3600)
-        print(f"{Fore.GREEN}[+] {name} completed")
+        if result.returncode == 0:
+            print(f"{Fore.GREEN}[+] {name} completed")
+        else:
+            print(f"{Fore.RED}[!] {name} completed with errors (return code: {result.returncode})")
+        
         if output_file:
             print(f"{Fore.GREEN}    Output saved to: {output_file}")
+        
+        if DEBUG:
+            print(f"{Fore.YELLOW}    Return code: {result.returncode}")
+            if result.stdout:
+                print(f"{Fore.YELLOW}    STDOUT: {result.stdout[:500]}")
+            if result.stderr:
+                print(f"{Fore.YELLOW}    STDERR: {result.stderr[:500]}")
+        
         return {'name': name, 'returncode': result.returncode, 'stdout': result.stdout, 'stderr': result.stderr}
     except subprocess.TimeoutExpired:
         print(f"{Fore.RED}[!] {name} timed out")
         return {'name': name, 'returncode': -1, 'error': 'timeout'}
     except Exception as e:
         print(f"{Fore.RED}[!] {name} failed: {e}")
+        if DEBUG:
+            import traceback
+            print(f"{Fore.YELLOW}    {traceback.format_exc()}")
         return {'name': name, 'returncode': -1, 'error': str(e)}
 
 def main():
     parser = argparse.ArgumentParser(description="Automated host scanning with configurable tools")
-    parser.add_argument("ip", help="IP address of target")
-    parser.add_argument("hostname", help="Hostname for /etc/hosts")
+    parser.add_argument("ip", required=True, help="IP address of target")
+    parser.add_argument("hostname", required=True, help="Hostname for /etc/hosts")
     parser.add_argument("-c", "--config", default="./config.yaml",
                        help="Path to configuration file")
-    parser.add_argument("-o", "--output-dir",
-                       help="Output directory for results (overrides config)")
+    parser.add_argument("-o", "--output-dir", required=True,
+                       help="Output directory for results")
     parser.add_argument("-s", "--skip-hosts", action="store_true",
                        help="Skip updating /etc/hosts file")
+    parser.add_argument("-d", "--debug", action="store_true",
+                       help="Enable debug logging with detailed error information")
     
     args = parser.parse_args()
+    
+    # Set debug flag
+    global DEBUG
+    DEBUG = args.debug
     
     # Load configuration
     try:
@@ -131,6 +155,12 @@ def main():
             print(f"{Fore.GREEN}    ✓ {result['name']}")
         else:
             print(f"{Fore.RED}    ✗ {result['name']}")
+            if DEBUG:
+                print(f"{Fore.YELLOW}      Return code: {result.get('returncode')}")
+                if 'error' in result:
+                    print(f"{Fore.YELLOW}      Error: {result['error']}")
+                if result.get('stderr'):
+                    print(f"{Fore.YELLOW}      STDERR: {result['stderr'][:200]}")
     print(f"{'='*60}")
 
 if __name__ == "__main__":

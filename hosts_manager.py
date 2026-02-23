@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """
 Hosts Manager Module
 Manages /etc/hosts file entries with automatic IP/hostname updates
@@ -77,9 +76,15 @@ def update_hosts(ip, hostname):
             # On Windows, just try to copy (requires admin rights)
             shutil.move(temp_path, hosts_file)
         else:  # Linux/Unix
-            # Use sudo to move the file
-            subprocess.run(['sudo', 'mv', temp_path, hosts_file], check=True)
-            subprocess.run(['sudo', 'chmod', '644', hosts_file], check=True)
+            # Check if we're already running as root
+            if os.geteuid() == 0:
+                # Already root, no need for sudo
+                shutil.move(temp_path, hosts_file)
+                os.chmod(hosts_file, 0o644)
+            else:
+                # Use sudo to move the file
+                subprocess.run(['sudo', 'mv', temp_path, hosts_file], check=True)
+                subprocess.run(['sudo', 'chmod', '644', hosts_file], check=True)
         
         if hostname_found:
             print(f"[+] Updated: {ip} {hostname}")
