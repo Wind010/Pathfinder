@@ -49,7 +49,7 @@ tools:
     output_args:
       - "-o"
   
-  - name: dnsenum
+  - name: DNSenum
     order: 1
     tool_name: dnsenum
     arguments:
@@ -61,7 +61,7 @@ tools:
     output_args:
       - "-o"
   
-  - name: whatweb
+  - name: WhatWeb
     order: 1
     tool_name: whatweb
     arguments:
@@ -72,7 +72,7 @@ tools:
     output_args:
       - "--log-brief="
   
-  - name: nuclei
+  - name: Nuclei
     order: 2
     tool_name: nuclei
     arguments:

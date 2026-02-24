@@ -167,9 +167,14 @@ def main():
   _____  _______ _______ _     _ _______ _____ __   _ ______  _______  ______
  |_____] |_____|    |    |_____| |______   |   | \  | |     \ |______ |_____/
  |       |     |    |    |     | |       __|__ |  \_| |_____/ |______ |    \_
+{Style.RESET_ALL}"""
+    print(banner)
+
+    banner = f"""{Fore.LIGHTGREEN_EX}
                                                                              developed by wind010
 {Style.RESET_ALL}"""
     print(banner)
+    
     
     # Set debug flag
     global DEBUG
