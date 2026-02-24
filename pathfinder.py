@@ -146,7 +146,7 @@ def run_tool(tool_config, variables):
         return {'name': name, 'returncode': -1, 'error': str(e)}
 
 def main():
-    parser = argparse.ArgumentParser(description="Automated host scanning with configurable tools")
+    parser = argparse.ArgumentParser(description="Automated host scanning/recon with configurable tools and script generation")
     parser.add_argument("--ip", required=True, help="IP address of target")
     parser.add_argument("--hostname", required=True, help="Hostname for /etc/hosts")
     parser.add_argument("-c", "--config", default="./config.yaml",
@@ -157,10 +157,19 @@ def main():
                        help="Skip updating /etc/hosts file")
     parser.add_argument("-d", "--debug", action="store_true",
                        help="Enable debug logging with detailed error information")
-    parser.add_argument("-g", "--generate-scripts", action="store_true",
-                       help="Generate shell scripts for each tool in the output directory")
+    parser.add_argument("-g", "--generate-scripts-only", action="store_true",
+                       help="Generate shell scripts for each tool in the output directory only, without executing the tools.")
     
     args = parser.parse_args()
+    
+    # Print banner
+    banner = f"""{Fore.LIGHTCYAN_EX}
+  _____  _______ _______ _     _ _______ _____ __   _ ______  _______  ______
+ |_____] |_____|    |    |_____| |______   |   | \  | |     \ |______ |_____/
+ |       |     |    |    |     | |       __|__ |  \_| |_____/ |______ |    \_
+                                                                             developed by wind010
+{Style.RESET_ALL}"""
+    print(banner)
     
     # Set debug flag
     global DEBUG
@@ -179,13 +188,6 @@ def main():
     # Create output directory
     os.makedirs(args.output_dir, exist_ok=True)
     
-    # Update /etc/hosts
-    if not args.skip_hosts:
-        if not update_hosts(args.ip, args.hostname):
-            print(f"{Fore.RED}[!] Failed to update /etc/hosts. Continue anyway? (y/n)")
-            if input().lower() != 'y':
-                sys.exit(1)
-    
     # Prepare variables for substitution
     variables = {
         'ip': args.ip,
@@ -193,21 +195,31 @@ def main():
         'output_dir': args.output_dir
     }
     
+    # Generate scripts
+    print(f"{Fore.CYAN}\n[*] Generating shell scripts...")
+    scripts_generated = []
+    for tool in config.get('tools', []):
+        script_file = generate_script(tool, variables, args.output_dir)
+        scripts_generated.append(script_file)
+        print(f"{Fore.GREEN}    Generated: {os.path.basename(script_file)}")
+    print(f"{Fore.GREEN}[+] Scripts saved to: {os.path.join(args.output_dir, 'scripts')}/")
+    print(f"{Fore.CYAN}[*] Script generation complete. Tools NOT executed.")
+    
+    if args.generate_scripts_only:
+            return
+    
+    # Update /etc/hosts (skip when only generating scripts)
+    if not args.skip_hosts:
+        if not update_hosts(args.ip, args.hostname):
+            print(f"{Fore.RED}[!] Failed to update /etc/hosts. Continue anyway? (y/n)")
+            if input().lower() != 'y':
+                sys.exit(1)
+    
     # Group tools by order
     tools_by_order = defaultdict(list)
     for tool in config.get('tools', []):
         order = tool.get('order', 999)
         tools_by_order[order].append(tool)
-    
-    # Generate scripts if requested
-    if args.generate_scripts:
-        print(f"{Fore.CYAN}\n[*] Generating shell scripts...")
-        scripts_generated = []
-        for tool in config.get('tools', []):
-            script_file = generate_script(tool, variables, args.output_dir)
-            scripts_generated.append(script_file)
-            print(f"{Fore.GREEN}    Generated: {os.path.basename(script_file)}")
-        print(f"{Fore.GREEN}[+] Scripts saved to: {os.path.join(args.output_dir, 'scripts')}/")
     
     # Execute tools in order
     all_results = []
