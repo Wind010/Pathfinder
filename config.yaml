@@ -14,7 +14,7 @@ tools:
       - "--range"
       - "1-65535"
       - "--"
-      - "A"
+      - "-A"
     output_file: "{output_dir}/rustscan/{hostname}.txt"
     output_args:
       - "-oA"
@@ -28,7 +28,7 @@ tools:
       - "http://{hostname}/FUZZ"
       - "-w"
       - "{wordlist}"
-      - "ac"
+      - "-ac"
     output_file: "{output_dir}/ffuf/dirs_{hostname}.txt"
     output_args:
       - "-o"
@@ -44,7 +44,7 @@ tools:
       - "Host: FUZZ.{hostname}"
       - "-w"
       - "{wordlist}"
-      - "ac"
+      - "-ac"
     output_file: "{output_dir}/ffuf/subdomains_{hostname}.txt"
     output_args:
       - "-o"
