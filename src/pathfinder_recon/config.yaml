@@ -1,0 +1,86 @@
+# Pathfinder Tool Configuration
+# order: determines execution order. Tools with the same order run in parallel.
+# Variables available: {ip}, {hostname}, {output_dir}, {wordlist}
+
+tools:
+  - name: rustscan
+    order: 1
+    tool_name: rustscan
+    arguments:
+      - "-a"
+      - "{hostname}"
+      - "--ulimit"
+      - "5000"
+      - "--range"
+      - "1-65535"
+      - "--"
+      - "-A"
+    output_file: "{output_dir}/rustscan/{hostname}.txt"
+    output_args:
+      - "-oA"
+    
+  - name: FFUF_directories
+    order: 1
+    tool_name: ffuf
+    wordlist: "~/git/SecLists/Discovery/Web-Content/common.txt"
+    arguments:
+      - "-u"
+      - "http://{hostname}/FUZZ"
+      - "-w"
+      - "{wordlist}"
+      - "-ac"
+    output_file: "{output_dir}/ffuf/dirs_{hostname}.txt"
+    output_args:
+      - "-o"
+    
+  - name: FFUF_subdomains
+    order: 1
+    tool_name: ffuf
+    wordlist: "~/git/SecLists/Discovery/DNS/subdomains-top1million-110000.txt"
+    arguments:
+      - "-u"
+      - "http://{hostname}"
+      - "-H"
+      - "Host: FUZZ.{hostname}"
+      - "-w"
+      - "{wordlist}"
+      - "-ac"
+    output_file: "{output_dir}/ffuf/subdomains_{hostname}.txt"
+    output_args:
+      - "-o"
+  
+  - name: DNSenum
+    order: 1
+    tool_name: dnsenum
+    arguments:
+      - "--enum"
+      - "{hostname}"
+      - "-f"
+      - "~/git/SecLists/Discovery/DNS/subdomains-top1million-5000.txt"
+    output_file: "{output_dir}/dnsenum/{hostname}.txt"
+    output_args:
+      - "-o"
+  
+  - name: WhatWeb
+    order: 1
+    tool_name: whatweb
+    arguments:
+      - "-a"
+      - "3"
+      - "http://{hostname}"
+    output_file: "{output_dir}/whatweb/{hostname}.txt"
+    output_args:
+      - "--log-brief="
+  
+  - name: Nuclei
+    order: 2
+    tool_name: "~/go/bin/nuclei"
+    arguments:
+      - "-u"
+      - "http://{hostname}"
+      - "-severity"
+      - "critical,high,medium"
+      - "-silent"
+    output_file: "{output_dir}/nuclei/{hostname}.txt"
+    output_args:
+      - "-o"

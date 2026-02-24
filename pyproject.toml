@@ -1,0 +1,49 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pathfinder-recon"
+version = "1.0.0"
+description = "A flexible, configuration-based reconnaissance automation tool for penetration testing"
+readme = "README.md"
+authors = [
+    { name = "wind010", email = "wind010@users.noreply.github.com" }
+]
+license = { text = "MIT" }
+requires-python = ">=3.6"
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Information Technology",
+    "Topic :: Security",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.6",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Operating System :: POSIX :: Linux",
+    "Operating System :: Microsoft :: Windows",
+]
+keywords = ["security", "penetration-testing", "reconnaissance", "CTF", "automation"]
+
+dependencies = [
+    "PyYAML>=6.0.3",
+    "colorama>=0.4.6",
+]
+
+[project.urls]
+Homepage = "https://github.com/wind010/Pathfinder"
+Repository = "https://github.com/wind010/Pathfinder"
+Issues = "https://github.com/wind010/Pathfinder/issues"
+
+[project.scripts]
+pathfinder = "pathfinder_recon.pathfinder:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+pathfinder_recon = ["*.yaml"]

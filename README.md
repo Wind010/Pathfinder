@@ -2,6 +2,8 @@
 
 A flexible, configuration-based reconnaissance automation tool for penetration testing and CTF challenges. Pathfinder streamlines the initial enumeration phase by orchestrating multiple security tools in parallel or sequential execution based on your configuration.
 
+LLM code assisted.
+
 ## Features
 
 - **📋 Config-driven**: Define all your recon tools and their execution order in a single YAML file
@@ -21,30 +23,80 @@ A flexible, configuration-based reconnaissance automation tool for penetration t
 - Administrator/sudo privileges (for /etc/hosts updates)
 - Your preferred recon tools (e.g., rustscan, ffuf, nmap, gobuster, etc.)
 
-### Install Dependencies
+### Method 1: Install with pipx (Recommended)
+
+pipx installs Python applications in isolated environments:
+
+```bash
+# Install pathfinder from GitHub
+pipx install git+https://github.com/wind010/Pathfinder.git
+
+# Or install from a local clone
+git clone https://github.com/wind010/Pathfinder.git
+cd Pathfinder
+pipx install .
+```
+
+After installation, the `pathfinder` command is available system-wide:
+```bash
+pathfinder --ip 10.10.10.10 --hostname example.htb -o ./scans/example -c ./config.yaml
+```
+
+**Note:** You'll need a `config.yaml` file. Copy the example from the repository or create your own.
+
+### Method 2: Install with pip
+
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/Pathfinder.git
+git clone https://github.com/wind010/Pathfinder.git
 cd Pathfinder
 
-# Install Python dependencies
-pip install -r requirements.txt
+# Install the package
+pip install .
+
+# Or install in development mode (for contributors)
+pip install -e .
 ```
 
 **Dependencies:**
 - `PyYAML>=6.0.3` - YAML configuration parsing
 - `colorama>=0.4.6` - Cross-platform colored terminal output
 
+### Getting Configuration File
+
+After installation, you'll need a `config.yaml` file:
+
+```bash
+# Download example config from repository
+curl -O https://raw.githubusercontent.com/wind010/Pathfinder/main/config.yaml
+
+# Or copy from a local clone
+git clone https://github.com/wind010/Pathfinder.git
+cp Pathfinder/config.yaml ./
+```
+
+### Uninstalling
+
+```bash
+# If installed with pipx
+pipx uninstall pathfinder-recon
+
+# If installed with pip
+pip uninstall pathfinder-recon
+```
+
 ## Usage
 
 ### Basic Syntax
+
+**Standard usage:**
 ```bash
-sudo python pathfinder.py --ip <target_ip> --hostname <target_hostname> -o <output_directory> [OPTIONS]
+sudo pathfinder --ip <target_ip> --hostname <target_hostname> -o <output_directory> -c <config_file> [OPTIONS]
 ```
 
-Sudo is not needed when we don't need to alter the `/etc/hosts` file.
+Sudo is not needed when you skip the `/etc/hosts` file update:
 ```bash
-python pathfinder.py --ip <target_ip> --hostname <target_hostname> -o <output_directory> --skip-hosts [OPTIONS]
+pathfinder --ip <target_ip> --hostname <target_hostname> -o <output_directory> -c <config_file> --skip-hosts [OPTIONS]
 ```
 
 ### Required Arguments
@@ -62,41 +114,96 @@ python pathfinder.py --ip <target_ip> --hostname <target_hostname> -o <output_di
 
 **Basic scan:**
 ```bash
-python pathfinder.py --ip 10.10.10.10 --hostname example.htb -o ./scans/example
+pathfinder --ip 10.10.10.10 --hostname example.htb -o ./scans/example -c ./config.yaml
 ```
 
 **Custom config file:**
 ```bash
+pathfinder --ip 10.10.10.10 --hostname example.htb -o ./scans/example -c ~/my-configs/custom.yaml
 python pathfinder.py --ip 10.10.10.10 --hostname example.htb -o ./scans/example -c custom_config.yaml
 ```
 
 **Generate scripts only (no execution):**
 ```bash
-python pathfinder.py --ip 10.10.10.10 --hostname example.htb -o ./scans/example -g
+pathfinder --ip 10.10.10.10 --hostname example.htb -o ./scans/example -c ./config.yaml -g
 ```
 
 **Skip /etc/hosts update:**
 ```bash
-python pathfinder.py --ip 10.10.10.10 --hostname example.htb -o ./scans/example --skip-hosts
+pathfinder --ip 10.10.10.10 --hostname example.htb -o ./scans/example -c ./config.yaml --skip-hosts
 ```
 
 **Enable debug mode:**
 ```bash
-python pathfinder.py --ip 10.10.10.10 --hostname example.htb -o ./scans/example -d
+pathfinder --ip 10.10.10.10 --hostname example.htb -o ./scans/example -c ./config.yaml -d
 ```
 
 ### Running with Elevated Privileges
 
-For /etc/hosts updates, you may need elevated privileges:
+For /etc/hosts updates, Pathfinder needs elevated privileges. Here are the recommended approaches:
 
-**Linux/WSL:**
+#### Option 1: Let Pathfinder Handle sudo (Recommended)
+
+Run pathfinder **without** sudo. The tool will automatically request sudo when needed for /etc/hosts updates:
+
 ```bash
-sudo python pathfinder.py --ip 10.10.10.10 --hostname example.htb -o ./scans/example
+pathfinder --ip 10.10.10.10 --hostname example.htb -o ./scans/example -c ./config.yaml
+```
+
+When prompted, enter your password for the sudo request.
+
+#### Option 2: Skip /etc/hosts Updates
+
+If you don't need automatic hosts file management, skip it:
+
+```bash
+pathfinder --ip 10.10.10.10 --hostname example.htb -o ./scans/example -c ./config.yaml --skip-hosts
+```
+
+Then manually add the entry to `/etc/hosts`:
+```bash
+echo "10.10.10.10 example.htb" | sudo tee -a /etc/hosts
+```
+
+#### Option 3: Run with sudo (pipx installations)
+
+If installed with **pipx**, `sudo pathfinder` won't work because pipx installs to your user directory. Use one of these workarounds:
+
+**Preserve PATH:**
+```bash
+sudo env "PATH=$PATH" pathfinder --ip 10.10.10.10 --hostname example.htb -o ./scans/example -c ./config.yaml
+```
+
+**Use full path:**
+```bash
+sudo ~/.local/bin/pathfinder --ip 10.10.10.10 --hostname example.htb -o ./scans/example -c ./config.yaml
+```
+
+**Preserve environment:**
+```bash
+sudo -E pathfinder --ip 10.10.10.10 --hostname example.htb -o ./scans/example -c ./config.yaml
+```
+
+#### Option 4: System-wide Installation (pip)
+
+If you need `sudo pathfinder` to work directly, install with pip instead of pipx:
+
+```bash
+# Uninstall pipx version
+pipx uninstall pathfinder-recon
+
+# Install system-wide with pip
+sudo pip install git+https://github.com/wind010/Pathfinder.git
+
+# Now this works
+sudo pathfinder --ip 10.10.10.10 --hostname example.htb -o ./scans/example -c ./config.yaml
 ```
 
 **Windows (PowerShell as Administrator):**
+
+Open PowerShell as Administrator, then run:
 ```powershell
-python pathfinder.py --ip 10.10.10.10 --hostname example.htb -o ./scans/example
+pathfinder --ip 10.10.10.10 --hostname example.htb -o ./scans/example -c ./config.yaml
 ```
 
 ## Configuration
@@ -403,18 +510,49 @@ bash ./scans/example/scripts/rustscan.sh
 
 ## Troubleshooting
 
+### "pathfinder: command not found" with sudo
+
+**Problem:** `sudo pathfinder` returns "command not found" but `pathfinder` works without sudo.
+
+**Cause:** When installed with pipx, the `pathfinder` command is in your user's PATH (`~/.local/bin/`), which sudo doesn't use.
+
+**Solutions:**
+
+**Option 1: Let pathfinder handle sudo (Recommended)**
+```bash
+# Run without sudo - pathfinder will request sudo when needed
+pathfinder --ip 10.10.10.10 --hostname example.htb -o ./scans/example -c ./config.yaml
+```
+
+**Option 2: Preserve PATH with sudo**
+```bash
+sudo env "PATH=$PATH" pathfinder --ip 10.10.10.10 --hostname example.htb -o ./scans/example -c ./config.yaml
+```
+
+**Option 3: Use full path**
+```bash
+sudo ~/.local/bin/pathfinder --ip 10.10.10.10 --hostname example.htb -o ./scans/example -c ./config.yaml
+```
+
+**Option 4: Install system-wide instead**
+```bash
+pipx uninstall pathfinder-recon
+sudo pip install git+https://github.com/wind010/Pathfinder.git
+```
+
 ### Permission Denied (Hosts File)
 
 **Problem:** Cannot update `/etc/hosts` file.
 
-**Solution:** Run with elevated privileges:
+**Solution 1:** Let pathfinder request sudo when needed:
 ```bash
-sudo python pathfinder.py --ip 10.10.10.10 --hostname example.htb -o ./scans/example
+pathfinder --ip 10.10.10.10 --hostname example.htb -o ./scans/example -c ./config.yaml
 ```
 
-Or skip hosts file update:
+**Solution 2:** Skip hosts file update and add manually:
 ```bash
-python pathfinder.py --ip 10.10.10.10 --hostname example.htb -o ./scans/example --skip-hosts
+pathfinder --ip 10.10.10.10 --hostname example.htb -o ./scans/example -c ./config.yaml --skip-hosts
+echo "10.10.10.10 example.htb" | sudo tee -a /etc/hosts
 ```
 
 ### Tool Not Found
@@ -425,18 +563,37 @@ python pathfinder.py --ip 10.10.10.10 --hostname example.htb -o ./scans/example 
 ```bash
 which rustscan
 which ffuf
+which nuclei
 ```
 
 Install missing tools or update the `tool_name` in `config.yaml` to the full path:
 ```yaml
 tool_name: /usr/local/bin/rustscan
+# Or for Go tools
+tool_name: ~/go/bin/nuclei
+```
+
+**Note:** Pathfinder automatically expands `~` in paths, so `~/go/bin/nuclei` will work correctly.
+
+### Config File Not Found
+
+**Problem:** `[!] Config file not found: ./config.yaml`
+
+**Solution:** Specify the config file path with `-c`:
+```bash
+pathfinder --ip 10.10.10.10 --hostname example.htb -o ./scans/example -c /path/to/config.yaml
+```
+
+Or download the example config:
+```bash
+curl -O https://raw.githubusercontent.com/wind010/Pathfinder/main/config.yaml
 ```
 
 ### Debug Mode
 
 Enable debug mode to see detailed error information:
 ```bash
-python pathfinder.py --ip 10.10.10.10 --hostname example.htb -o ./scans/example -d
+pathfinder --ip 10.10.10.10 --hostname example.htb -o ./scans/example -c ./config.yaml -d
 ```
 
 This will show:
