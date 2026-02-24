@@ -163,7 +163,7 @@ def main():
     args = parser.parse_args()
     
     # Print banner
-    banner = f"""{Fore.LIGHTCYAN_EX}
+    banner = rf"""{Fore.LIGHTCYAN_EX}
   _____  _______ _______ _     _ _______ _____ __   _ ______  _______  ______
  |_____] |_____|    |    |_____| |______   |   | \  | |     \ |______ |_____/
  |       |     |    |    |     | |       __|__ |  \_| |_____/ |______ |    \_
