@@ -1,5 +1,7 @@
 # Pathfinder - Automated Recon Tool
 
+![alt text](pathfinder.png)
+
 A flexible, configuration-based reconnaissance automation tool for penetration testing and CTF challenges. Pathfinder streamlines the initial enumeration phase by orchestrating multiple security tools in parallel or sequential execution based on your configuration.
 
 LLM code assisted.
