@@ -48,3 +48,39 @@ tools:
     output_file: "{output_dir}/ffuf/subdomains_{hostname}.txt"
     output_args:
       - "-o"
+  
+  - name: dnsenum
+    order: 1
+    tool_name: dnsenum
+    arguments:
+      - "--enum"
+      - "{hostname}"
+      - "-f"
+      - "~/git/SecLists/Discovery/DNS/subdomains-top1million-5000.txt"
+    output_file: "{output_dir}/dnsenum/{hostname}.txt"
+    output_args:
+      - "-o"
+  
+  - name: whatweb
+    order: 1
+    tool_name: whatweb
+    arguments:
+      - "-a"
+      - "3"
+      - "http://{hostname}"
+    output_file: "{output_dir}/whatweb/{hostname}.txt"
+    output_args:
+      - "--log-brief="
+  
+  - name: nuclei
+    order: 2
+    tool_name: nuclei
+    arguments:
+      - "-u"
+      - "http://{hostname}"
+      - "-severity"
+      - "critical,high,medium"
+      - "-silent"
+    output_file: "{output_dir}/nuclei/{hostname}.txt"
+    output_args:
+      - "-o"
