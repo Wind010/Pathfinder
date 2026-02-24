@@ -43,7 +43,7 @@ def expand_path(path):
 
 def build_command(tool_config, variables):
     """Build command from tool configuration"""
-    tool_name = tool_config['tool_name']
+    tool_name = expand_path(tool_config['tool_name'])
     
     # Merge global variables with tool-specific variables
     tool_vars = variables.copy()

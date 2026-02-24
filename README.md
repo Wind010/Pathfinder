@@ -44,7 +44,7 @@ sudo python pathfinder.py --ip <target_ip> --hostname <target_hostname> -o <outp
 
 Sudo is not needed when we don't need to alter the `/etc/hosts` file.
 ```bash
-python pathfinder.py --ip <target_ip> --hostname <target_hostname> -o <output_directory> -s [OPTIONS]
+python pathfinder.py --ip <target_ip> --hostname <target_hostname> -o <output_directory> --skip-hosts [OPTIONS]
 ```
 
 ### Required Arguments

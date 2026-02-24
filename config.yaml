@@ -74,7 +74,7 @@ tools:
   
   - name: Nuclei
     order: 2
-    tool_name: nuclei
+    tool_name: "~/go/bin/nuclei"
     arguments:
       - "-u"
       - "http://{hostname}"
